@@ -262,41 +262,43 @@ curl -X POST http://localhost:8080/api/v1/contracts \
 
 ## 🚢 Deployment
 
-### Option A: Railway.app (Free Tier - Recommended for Bootstrap)
+### Quick Start: Railway + Vercel (Recommended)
+
+**Complete step-by-step guide:** [docs/RAILWAY_VERCEL_QUICK_DEPLOY.md](docs/RAILWAY_VERCEL_QUICK_DEPLOY.md)
+
+**Environment variables guide:** [docs/ENV_VARIABLES_GUIDE.md](docs/ENV_VARIABLES_GUIDE.md)
+
+**Time:** 2-3 hours | **Cost:** $5-20/month
+
+1. **Push to GitHub**
+2. **Deploy Backend on Railway** (with PostgreSQL)
+3. **Deploy Frontend on Vercel**
+4. **Configure services:**
+   - Razorpay (payments)
+   - Resend (emails)
+   - Polygon (blockchain - optional)
+
+### Full Deployment Options
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for:
+
+- Railway + Vercel (Easiest)
+- AWS EC2 + S3 (Enterprise)
+- DigitalOcean (Budget)
+- Docker + Kubernetes (Advanced)
+
+### Local Testing Only
 
 ```bash
-# 1. Install Railway CLI
-npm install -g @railway/cli
+# Backend
+cd legalpay-api
+mvn spring-boot:run
+# Runs on http://localhost:8080
 
-# 2. Login
-railway login
-
-# 3. Initialize
-railway init
-
-# 4. Add PostgreSQL
-railway add postgresql
-
-# 5. Deploy
-railway up
-```
-
-**Cost:** ₹0/month (within $5 credit)
-
-### Option B: Docker + Kubernetes
-
-```bash
-# Build Docker image
-docker build -t legalpay-api:latest .
-
-# Run locally
-docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  -e DATABASE_URL=postgresql://... \
-  legalpay-api:latest
-
-# Deploy to Kubernetes
-kubectl apply -f k8s/deployment.yml
+# Frontend
+cd frontend
+npm run dev
+# Runs on http://localhost:3000
 ```
 
 ---
@@ -390,10 +392,25 @@ mvn clean install -DskipTests
 
 ## 📞 Support
 
-- **Documentation**: [/docs](./docs/)
-- **API Docs**: http://localhost:8080/swagger-ui.html
-- **Architecture**: [System_Architecture_and_Implementation.md](./docs/System_Architecture_and_Implementation.md)
-- **Bootstrap Guide**: [Bootstrap_Strategy_Free_Minimal_Cost.md](./docs/Bootstrap_Strategy_Free_Minimal_Cost.md)
+**Deployment Guides:**
+
+- 🚀 [Quick Deploy (Railway + Vercel)](./docs/RAILWAY_VERCEL_QUICK_DEPLOY.md)
+- ⚙️ [Environment Variables Guide](./docs/ENV_VARIABLES_GUIDE.md)
+- 📖 [Complete Deployment Guide](./docs/DEPLOYMENT.md)
+
+**Integration Guides:**
+
+- 💳 [Payment Integration (Razorpay)](./docs/Payment_Integration_Implementation_Guide.md)
+- 📧 [Email Integration (Resend)](./docs/Email_Integration_Guide.md)
+- ⛓️ [Blockchain Integration (Polygon)](./docs/Blockchain_Integration_Guide.md)
+
+**Architecture & Strategy:**
+
+- 🏗️ [System Architecture](./docs/System_Architecture_and_Implementation.md)
+- 📋 [Product Requirements](./docs/PRD_PaymentAutomation.md)
+- 💰 [Bootstrap Strategy](./docs/Bootstrap_Strategy_Free_Minimal_Cost.md)
+
+**API Documentation:** http://localhost:8080/swagger-ui.html (when running locally)
 
 ---
 

@@ -18,6 +18,19 @@ spring:
       minimum-idle: 2
       connection-timeout: 30000
       idle-timeout: 600000
+
+# Email Configuration (Production)
+email:
+  from: ${EMAIL_FROM:noreply@legalpay.in}
+
+resend:
+  enabled: ${RESEND_ENABLED:true}
+  api:
+    key: ${RESEND_API_KEY}
+
+app:
+  frontend:
+    url: ${FRONTEND_URL}
       max-lifetime: 1800000
   
   # JPA Configuration

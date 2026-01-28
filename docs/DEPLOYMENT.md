@@ -1,20 +1,110 @@
 # LegalPay - Complete Production Deployment Guide
 
+## Quick Start Checklist
+
+**For Railway + Vercel deployment (recommended):**
+
+- [ ] **1. Push code to GitHub**
+- [ ] **2. Deploy Backend on Railway**
+  - [ ] Import GitHub repo
+  - [ ] Add PostgreSQL database
+  - [ ] Configure 15+ environment variables (see [Backend Environment Variables](#backend-environment-variables))
+- [ ] **3. Deploy Frontend on Vercel**
+  - [ ] Import GitHub repo
+  - [ ] Set root directory to `frontend`
+  - [ ] Add `VITE_API_URL` environment variable
+- [ ] **4. Setup Services**
+  - [ ] Razorpay account + KYC
+  - [ ] Resend email account + API key
+  - [ ] (Optional) Polygon blockchain wallet
+- [ ] **5. Test end-to-end** (user registration → email → login → contract creation)
+
+**Estimated time:** 2-3 hours
+
+---
+
+## Backend Environment Variables
+
+**Complete list for Railway:**
+
+```bash
+# Core
+SPRING_PROFILES_ACTIVE=prod
+PORT=8080
+DATABASE_URL=(auto-set by Railway PostgreSQL)
+JWT_SECRET=(generate with: openssl rand -base64 32)
+FRONTEND_URL=https://your-app.vercel.app
+
+# Payment Gateway (Razorpay)
+RAZORPAY_KEY_ID=rzp_live_xxxxx
+RAZORPAY_KEY_SECRET=your_secret
+RAZORPAY_WEBHOOK_SECRET=whsec_xxxxx
+
+# Email Service (Resend)
+RESEND_ENABLED=true
+RESEND_API_KEY=re_xxxxx
+EMAIL_FROM=noreply@yourdomain.com
+
+# Blockchain (Optional - can disable)
+BLOCKCHAIN_ENABLED=false
+BLOCKCHAIN_NETWORK=polygon-mainnet
+BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
+BLOCKCHAIN_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+BLOCKCHAIN_CONTRACT_ADDRESS=0xDEPLOYED_ADDRESS
+BLOCKCHAIN_GAS_PRICE=50000000000
+BLOCKCHAIN_GAS_LIMIT=300000
+BLOCKCHAIN_CONFIRMATION_BLOCKS=10
+```
+
+**Copy-paste template for Railway (MVP - Blockchain disabled):**
+
+```bash
+SPRING_PROFILES_ACTIVE=prod
+PORT=8080
+JWT_SECRET=REPLACE_WITH_GENERATED_SECRET
+FRONTEND_URL=https://your-app.vercel.app
+RAZORPAY_KEY_ID=rzp_test_xxxxx
+RAZORPAY_KEY_SECRET=test_secret
+RAZORPAY_WEBHOOK_SECRET=whsec_test
+RESEND_ENABLED=true
+RESEND_API_KEY=re_xxxxx
+EMAIL_FROM=noreply@yourdomain.com
+BLOCKCHAIN_ENABLED=false
+```
+
+## Frontend Environment Variables
+
+**For Vercel:**
+
+```bash
+VITE_API_URL=https://your-railway-app.railway.app
+```
+
+**How to get Railway backend URL:**
+
+- Railway Dashboard → Your service → Settings → Domains
+- Copy the generated URL (e.g., `legalpay-api-production.up.railway.app`)
+
+---
+
 ## Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Infrastructure Setup](#infrastructure-setup)
-3. [Database Setup (PostgreSQL)](#database-setup-postgresql)
-4. [Backend Deployment](#backend-deployment)
-5. [Frontend Deployment](#frontend-deployment)
-6. [Payment Gateway Setup (Razorpay)](#payment-gateway-setup-razorpay)
-7. [Blockchain Setup (Optional)](#blockchain-setup-optional)
-8. [Email Configuration](#email-configuration)
-9. [SSL/HTTPS Setup](#sslhttps-setup)
-10. [Monitoring & Logging](#monitoring--logging)
-11. [Backup & Disaster Recovery](#backup--disaster-recovery)
-12. [Post-Deployment Testing](#post-deployment-testing)
-13. [Troubleshooting](#troubleshooting)
+1. [Quick Start Checklist](#quick-start-checklist)
+2. [Backend Environment Variables](#backend-environment-variables)
+3. [Frontend Environment Variables](#frontend-environment-variables)
+4. [Prerequisites](#prerequisites)
+5. [Infrastructure Setup](#infrastructure-setup)
+6. [Database Setup (PostgreSQL)](#database-setup-postgresql)
+7. [Backend Deployment](#backend-deployment)
+8. [Frontend Deployment](#frontend-deployment)
+9. [Payment Gateway Setup (Razorpay)](#payment-gateway-setup-razorpay)
+10. [Blockchain Setup (Optional)](#blockchain-setup-optional)
+11. [Email Configuration](#email-configuration)
+12. [SSL/HTTPS Setup](#sslhttps-setup)
+13. [Monitoring & Logging](#monitoring--logging)
+14. [Backup & Disaster Recovery](#backup--disaster-recovery)
+15. [Post-Deployment Testing](#post-deployment-testing)
+16. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -23,49 +113,43 @@
 ### Required Accounts & Services
 
 - ✅ **GitHub Account** - For code repository
+- ✅ **Railway Account** - Backend hosting ([Sign up](https://railway.app))
+- ✅ **Vercel Account** - Frontend hosting ([Sign up](https://vercel.com))
 - ✅ **Razorpay Account** - Payment gateway ([Sign up](https://dashboard.razorpay.com/signup))
-- ✅ **Domain Name** - Your custom domain (e.g., legalpay.in)
-- ✅ **Cloud Provider** - Choose one:
-  - **Option A:** Railway + Vercel (Easiest, Recommended)
-  - **Option B:** AWS EC2 + S3 (Full control)
-  - **Option C:** DigitalOcean Droplet + Cloudflare (Budget-friendly)
-  - **Option D:** Docker + Any VPS (Advanced)
+- ✅ **Resend Account** - Email service ([Sign up](https://resend.com/signup))
+- ✅ **Domain Name** (Optional) - Your custom domain (e.g., legalpay.in)
 
-### Software Requirements
+### Software Requirements (Local Development)
 
 - Java 21+
 - Node.js 18+
-- PostgreSQL 14+
 - Maven 3.8+
 - Git
-- Docker (optional)
-- OpenSSL (for SSL certificates)
+- OpenSSL (for generating secrets)
 
 ### Estimated Costs (Monthly)
 
-**Option A: Railway + Vercel (Recommended for MVP)**
+**Railway + Vercel (Recommended for MVP)**
+
 - Railway (Backend + Database): $5-20/month
 - Vercel (Frontend): Free tier (sufficient)
+- Resend (Email): Free (3,000 emails/month)
 - Razorpay: Transaction-based (2% + ₹3 per transaction)
+- Blockchain (optional): ₹250-500/month (1000 transactions)
 - **Total: $5-20/month (~₹400-1600)**
 
-**Option B: AWS**
+**AWS (Enterprise)**
+
 - EC2 t3.small: $15/month
 - RDS PostgreSQL db.t3.micro: $15/month
 - S3 + CloudFront: $5/month
 - **Total: $35/month (~₹2900)**
 
-**Option C: DigitalOcean**
-- Droplet (2GB RAM): $12/month
-- Managed PostgreSQL: $15/month
-- Spaces + CDN: $5/month
-- **Total: $32/month (~₹2650)**
-
 ---
 
 ## Infrastructure Setup
 
-### Option A: Railway + Vercel (Recommended for Beginners)
+### Option A: Railway + Vercel (Recommended for MVP)
 
 **Best for:** Quick deployment, auto-scaling, zero DevOps
 
@@ -97,11 +181,13 @@ vercel login
 **Best for:** Enterprise, full control, compliance requirements
 
 #### Step 1: Create AWS Account
+
 1. Go to https://aws.amazon.com
 2. Sign up (requires credit card)
 3. Verify email and phone
 
 #### Step 2: Setup IAM User
+
 ```bash
 # Install AWS CLI
 curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
@@ -161,6 +247,7 @@ railway variables
    - Add rule: PostgreSQL (5432), Source: EC2 Security Group
 
 3. **Get Connection Details:**
+
 ```bash
 # Endpoint: your-db.xxxxx.ap-south-1.rds.amazonaws.com
 # Port: 5432
@@ -240,18 +327,46 @@ cat > railway.json << 'EOF'
 EOF
 ```
 
-#### Step 2: Deploy to Railway
+#### Step 2: Configure Environment Variables on Railway
+
+**Method A: Using Railway CLI**
 
 ```bash
 # Initialize Railway project
 railway init
 
-# Set environment variables
+# Core Configuration
 railway variables set SPRING_PROFILES_ACTIVE=prod
-railway variables set DATABASE_URL=<your-postgres-url>
-railway variables set RAZORPAY_KEY_ID=<your-key>
-railway variables set RAZORPAY_KEY_SECRET=<your-secret>
+railway variables set PORT=8080
+
+# Database (auto-provided if you added PostgreSQL via Railway)
+# DATABASE_URL is automatically set by Railway PostgreSQL service
+
+# JWT Security
 railway variables set JWT_SECRET=$(openssl rand -base64 32)
+
+# Frontend URL (your Vercel deployment URL)
+railway variables set FRONTEND_URL=https://your-app.vercel.app
+
+# Payment Gateway (Razorpay)
+railway variables set RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxx
+railway variables set RAZORPAY_KEY_SECRET=your_razorpay_secret_here
+railway variables set RAZORPAY_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
+
+# Email Service (Resend) - Get API key from https://resend.com
+railway variables set RESEND_ENABLED=true
+railway variables set RESEND_API_KEY=re_xxxxxxxxxxxxx
+railway variables set EMAIL_FROM=noreply@yourdomain.com
+
+# Blockchain (Optional - Polygon)
+railway variables set BLOCKCHAIN_ENABLED=true
+railway variables set BLOCKCHAIN_NETWORK=polygon-mainnet
+railway variables set BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
+railway variables set BLOCKCHAIN_PRIVATE_KEY=0xYOUR_WALLET_PRIVATE_KEY
+railway variables set BLOCKCHAIN_CONTRACT_ADDRESS=0xDEPLOYED_CONTRACT_ADDRESS
+railway variables set BLOCKCHAIN_GAS_PRICE=50000000000
+railway variables set BLOCKCHAIN_GAS_LIMIT=300000
+railway variables set BLOCKCHAIN_CONFIRMATION_BLOCKS=10
 
 # Deploy
 railway up
@@ -259,6 +374,61 @@ railway up
 # Get deployment URL
 railway domain
 ```
+
+**Method B: Using Railway Dashboard** (Recommended - Easier)
+
+1. Go to https://railway.app/dashboard
+2. Select your project → **Variables** tab
+3. Click **+ New Variable** and add each of these:
+
+| Variable Name                    | Example Value                 | Description                          |
+| -------------------------------- | ----------------------------- | ------------------------------------ |
+| `SPRING_PROFILES_ACTIVE`         | `prod`                        | Spring Boot profile                  |
+| `PORT`                           | `8080`                        | Server port                          |
+| `DATABASE_URL`                   | (Auto-set by Railway)         | PostgreSQL connection string         |
+| `JWT_SECRET`                     | `generated-random-string`     | Use `openssl rand -base64 32`        |
+| `FRONTEND_URL`                   | `https://legalpay.vercel.app` | Your Vercel frontend URL             |
+| **Payment Gateway**              |                               |                                      |
+| `RAZORPAY_KEY_ID`                | `rzp_live_xxxx`               | From Razorpay dashboard              |
+| `RAZORPAY_KEY_SECRET`            | `secret_here`                 | From Razorpay dashboard              |
+| `RAZORPAY_WEBHOOK_SECRET`        | `whsec_xxxx`                  | From Razorpay webhooks               |
+| **Email Service**                |                               |                                      |
+| `RESEND_ENABLED`                 | `true`                        | Enable production emails             |
+| `RESEND_API_KEY`                 | `re_xxxx`                     | Get from https://resend.com/api-keys |
+| `EMAIL_FROM`                     | `noreply@yourdomain.com`      | Sender email address                 |
+| **Blockchain (Optional)**        |                               |                                      |
+| `BLOCKCHAIN_ENABLED`             | `true` or `false`             | Enable audit trail on Polygon        |
+| `BLOCKCHAIN_NETWORK`             | `polygon-mainnet`             | Use Mumbai for testing               |
+| `BLOCKCHAIN_RPC_URL`             | `https://polygon-rpc.com`     | Polygon RPC endpoint                 |
+| `BLOCKCHAIN_PRIVATE_KEY`         | `0xYOUR_PRIVATE_KEY`          | Wallet private key (keep secure!)    |
+| `BLOCKCHAIN_CONTRACT_ADDRESS`    | `0xCONTRACT_ADDR`             | Deployed smart contract address      |
+| `BLOCKCHAIN_GAS_PRICE`           | `50000000000`                 | 50 Gwei (adjust based on network)    |
+| `BLOCKCHAIN_GAS_LIMIT`           | `300000`                      | Gas limit per transaction            |
+| `BLOCKCHAIN_CONFIRMATION_BLOCKS` | `10`                          | Confirmations before marking success |
+
+4. Click **Deploy** to apply changes
+
+**Quick Copy-Paste Template for Railway Dashboard:**
+
+```bash
+# Generate JWT secret first
+openssl rand -base64 32
+
+# Then paste these in Railway (replace values):
+SPRING_PROFILES_ACTIVE=prod
+PORT=8080
+JWT_SECRET=<generated-above>
+FRONTEND_URL=https://your-app.vercel.app
+RAZORPAY_KEY_ID=rzp_live_xxxxx
+RAZORPAY_KEY_SECRET=your_secret
+RAZORPAY_WEBHOOK_SECRET=whsec_xxxxx
+RESEND_ENABLED=true
+RESEND_API_KEY=re_xxxxx
+EMAIL_FROM=noreply@yourdomain.com
+BLOCKCHAIN_ENABLED=false
+```
+
+**Note:** `DATABASE_URL` is automatically injected by Railway when you add PostgreSQL. Don't manually set it.
 
 #### Step 3: Configure Custom Domain
 
@@ -510,6 +680,8 @@ docker-compose up -d backend
 
 ### Option A: Vercel (Recommended)
 
+**Best for:** Automatic deployments, global CDN, zero configuration
+
 #### Step 1: Prepare Frontend
 
 ```bash
@@ -517,14 +689,183 @@ cd frontend
 
 # Update .env.production
 cat > .env.production << 'EOF'
-VITE_API_URL=https://api.yourdomain.com
+VITE_API_URL=https://your-railway-app.railway.app
 EOF
 
 # Test build locally
 npm run build
 ```
 
-#### Step 2: Deploy to Vercel
+#### Step 2: Deploy via Vercel Dashboard (Easiest Method)
+
+1. **Push code to GitHub** (if not already done)
+
+```bash
+cd /path/to/LegalPayApp
+git add .
+git commit -m "Ready for deployment"
+git push origin main
+```
+
+2. **Import Project on Vercel**
+   - Visit https://vercel.com/new
+   - Click **Import Git Repository**
+   - Select your GitHub repository
+   - Authorize Vercel to access GitHub
+
+3. **Configure Build Settings**
+
+| Setting          | Value                    |
+| ---------------- | ------------------------ |
+| Framework Preset | **Vite** (auto-detected) |
+| Root Directory   | `frontend`               |
+| Build Command    | `npm run build`          |
+| Output Directory | `dist`                   |
+| Install Command  | `npm install`            |
+
+4. **Add Environment Variables**
+
+Click **Environment Variables** section → **Add**:
+
+```
+Name:  VITE_API_URL
+Value: https://your-railway-app.railway.app
+Environment: Production ✓
+```
+
+**How to get Railway backend URL:**
+
+```bash
+# Option 1: Railway CLI
+railway status
+# Look for: Deployment URL
+
+# Option 2: Railway Dashboard
+# Go to your backend service → Settings → Domains
+# Copy the Railway-provided URL (e.g., legalpay-api-production.up.railway.app)
+```
+
+**Complete example:**
+
+```
+VITE_API_URL=https://legalpay-api-production.up.railway.app
+```
+
+5. **Deploy**
+   - Click **Deploy** button
+   - Wait 2-3 minutes for build
+   - You'll get a URL like: `https://legalpay-xyz123.vercel.app`
+
+#### Step 3: Update Railway Backend with Vercel URL
+
+**Critical:** Railway backend needs to know the frontend URL for CORS and email links.
+
+**Method A: Railway Dashboard**
+
+1. Go to https://railway.app/dashboard
+2. Select your backend service
+3. Go to **Variables** tab
+4. Find `FRONTEND_URL` variable (or add new)
+5. Update value to: `https://legalpay-xyz123.vercel.app`
+6. Click **Deploy** to apply
+
+**Method B: Railway CLI**
+
+```bash
+railway variables set FRONTEND_URL=https://legalpay-xyz123.vercel.app
+```
+
+**Why this matters:**
+
+- ✅ Enables CORS for frontend API calls
+- ✅ Email verification links point to correct domain
+- ✅ Password reset redirects work
+- ✅ Payment callback URLs configured correctly
+
+#### Step 4: Configure Custom Domain (Optional but Recommended)
+
+**In Vercel Dashboard:**
+
+1. Go to your project → **Settings** → **Domains**
+2. Click **Add Domain**
+3. Enter your domain:
+   - Root domain: `yourdomain.com`
+   - Or subdomain: `app.yourdomain.com`
+
+4. **Add DNS Records** (in your domain registrar like GoDaddy/Namecheap/Cloudflare):
+
+**For root domain (`yourdomain.com`):**
+
+```bash
+Type: A
+Name: @
+Value: 76.76.21.21
+
+Type: AAAA
+Name: @
+Value: 2606:4700:3033::ac43:bd43
+```
+
+**For subdomain (`app.yourdomain.com`):**
+
+```bash
+Type: CNAME
+Name: app
+Value: cname.vercel-dns.com
+```
+
+**For both root and www:**
+
+```bash
+# Root domain
+Type: A
+Name: @
+Value: 76.76.21.21
+
+# www subdomain
+Type: CNAME
+Name: www
+Value: cname.vercel-dns.com
+```
+
+5. **Wait for DNS propagation** (5-30 minutes)
+6. Vercel automatically provisions **SSL certificate** ✅
+
+7. **Update Railway backend again:**
+
+```bash
+railway variables set FRONTEND_URL=https://app.yourdomain.com
+```
+
+#### Step 5: Verify Deployment
+
+```bash
+# Test frontend loads
+curl -I https://legalpay-xyz123.vercel.app
+# Expected: HTTP/2 200
+
+# Test with custom domain (if configured)
+curl -I https://app.yourdomain.com
+# Expected: HTTP/2 200
+
+# Test API connectivity
+# Open browser: https://legalpay-xyz123.vercel.app
+# Open Console (F12) → Network tab
+# Try to login - should see API calls to Railway backend
+```
+
+**Troubleshooting Frontend-Backend Connection:**
+
+If frontend can't reach backend:
+
+1. Check Railway `FRONTEND_URL` matches Vercel URL exactly
+2. Check Vercel `VITE_API_URL` matches Railway backend URL exactly
+3. Verify Railway backend is running: `curl https://your-railway-app.railway.app/actuator/health`
+4. Check browser console for CORS errors
+
+---
+
+#### Alternative: Deploy via Vercel CLI
 
 ```bash
 # Login
@@ -698,56 +1039,425 @@ RAZORPAY_KEY_SECRET=YYYYYY
 
 ## Blockchain Setup (Optional)
 
-### Detailed setup in: [Blockchain_Integration_Guide.md](docs/Blockchain_Integration_Guide.md)
+LegalPay uses **Polygon blockchain** for immutable audit trails of contracts, payments, and legal notices.
 
-### Quick Production Setup
+**When to use:**
 
-#### Step 1: Buy MATIC
+- ✅ Compliance requires audit trail
+- ✅ Dispute resolution needs proof
+- ✅ Multi-party contract verification
 
-```bash
-# Buy from Indian exchange:
-# - WazirX: https://wazirx.com
-# - CoinDCX: https://coindcx.com
+**When to skip:**
 
-# Amount needed: 10-20 MATIC (~₹500-1000 for first month)
-```
+- For MVP testing
+- Cost sensitivity (₹0.05-0.20 per transaction)
+- Simple use cases
 
-#### Step 2: Deploy Contract to Polygon Mainnet
-
-```bash
-# Using Remix (https://remix.ethereum.org):
-1. Switch MetaMask to Polygon Mainnet
-2. Copy contract from contracts/AuditTrail.sol
-3. Compile (Solidity 0.8.20)
-4. Deploy (costs ~0.01 MATIC)
-5. Verify on PolygonScan
-6. Copy contract address
-```
-
-#### Step 3: Configure Backend
+### Quick Decision Guide
 
 ```bash
-# Add to .env:
-BLOCKCHAIN_ENABLED=true
-BLOCKCHAIN_NETWORK=polygon-mainnet
-BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
-BLOCKCHAIN_PRIVATE_KEY=your_metamask_private_key
-BLOCKCHAIN_CONTRACT_ADDRESS=deployed_contract_address
-BLOCKCHAIN_GAS_PRICE=50000000000
-BLOCKCHAIN_GAS_LIMIT=300000
-BLOCKCHAIN_CONFIRMATION_BLOCKS=10
-```
-
-**OR Disable Blockchain:**
-```bash
+# Disable blockchain (recommended for MVP)
 BLOCKCHAIN_ENABLED=false
+
+# Enable blockchain (production with compliance)
+BLOCKCHAIN_ENABLED=true
 ```
+
+### Full Setup Guide
+
+**See detailed guide:** [docs/Blockchain_Integration_Guide.md](./Blockchain_Integration_Guide.md)
+
+### Production Deployment (5 Steps)
+
+#### Step 1: Get MATIC Tokens
+
+**Buy from Indian Exchange:**
+
+- **WazirX:** https://wazirx.com
+- **CoinDCX:** https://coindcx.com
+- **ZebPay:** https://zebpay.com
+
+**Amount needed:**
+
+- Initial: 10-20 MATIC (~₹500-1000)
+- Monthly (1000 txs): ~5-10 MATIC (~₹250-500)
+
+**Transfer to MetaMask:**
+
+1. Install MetaMask: https://metamask.io
+2. Create wallet → Save recovery phrase securely
+3. Add Polygon network
+4. Copy wallet address
+5. Withdraw MATIC from exchange to MetaMask
+
+#### Step 2: Deploy Smart Contract to Polygon Mainnet
+
+**Using Remix IDE:**
+
+1. Go to https://remix.ethereum.org
+2. Create new file: `AuditTrail.sol`
+3. Copy contract from [contracts/AuditTrail.sol](../contracts/AuditTrail.sol)
+4. **Compile:**
+   - Compiler: `0.8.20`
+   - Click **Compile AuditTrail.sol**
+5. **Deploy:**
+   - Environment: **Injected Provider - MetaMask**
+   - Switch MetaMask to **Polygon Mainnet**
+   - Click **Deploy** (costs ~0.01 MATIC, ~₹0.50)
+6. **Copy deployed contract address** (starts with `0x...`)
+7. **Verify on PolygonScan** (optional):
+   - Go to https://polygonscan.com
+   - Search contract address
+   - Click **Verify and Publish**
+
+**Example contract address:** `0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb`
+
+#### Step 3: Export Private Key from MetaMask
+
+⚠️ **Security Warning:** Never share or commit private key!
+
+1. Open MetaMask
+2. Click three dots → **Account Details**
+3. Click **Show Private Key**
+4. Enter password
+5. Copy private key (starts with `0x...`)
+
+#### Step 4: Configure Railway Environment Variables
+
+**In Railway Dashboard:**
+
+Go to your backend service → **Variables** → Add these:
+
+| Variable                         | Value                     | Description                  |
+| -------------------------------- | ------------------------- | ---------------------------- |
+| `BLOCKCHAIN_ENABLED`             | `true`                    | Enable blockchain logging    |
+| `BLOCKCHAIN_NETWORK`             | `polygon-mainnet`         | Use Mumbai for testing       |
+| `BLOCKCHAIN_RPC_URL`             | `https://polygon-rpc.com` | Free public RPC              |
+| `BLOCKCHAIN_PRIVATE_KEY`         | `0xYOUR_PRIVATE_KEY`      | From MetaMask (keep secure!) |
+| `BLOCKCHAIN_CONTRACT_ADDRESS`    | `0xDEPLOYED_ADDRESS`      | From Remix deployment        |
+| `BLOCKCHAIN_GAS_PRICE`           | `50000000000`             | 50 Gwei (adjust if needed)   |
+| `BLOCKCHAIN_GAS_LIMIT`           | `300000`                  | Gas limit per transaction    |
+| `BLOCKCHAIN_CONFIRMATION_BLOCKS` | `10`                      | Wait for 10 blocks (~30 sec) |
+
+**Or via Railway CLI:**
+
+```bash
+railway variables set BLOCKCHAIN_ENABLED=true
+railway variables set BLOCKCHAIN_NETWORK=polygon-mainnet
+railway variables set BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
+railway variables set BLOCKCHAIN_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+railway variables set BLOCKCHAIN_CONTRACT_ADDRESS=0xDEPLOYED_ADDRESS
+railway variables set BLOCKCHAIN_GAS_PRICE=50000000000
+railway variables set BLOCKCHAIN_GAS_LIMIT=300000
+railway variables set BLOCKCHAIN_CONFIRMATION_BLOCKS=10
+```
+
+#### Step 5: Verify Blockchain Integration
+
+**Test transaction:**
+
+```bash
+# Create a contract via API
+curl -X POST https://your-railway-app.railway.app/api/v1/contracts \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "payerEmail": "test@example.com",
+    "principalAmount": 100000,
+    "title": "Blockchain Test Contract"
+  }'
+
+# Check Railway logs
+railway logs | grep "Blockchain"
+
+# Should see:
+# "Blockchain transaction submitted: 0x1234..."
+# "Transaction confirmed in block: 12345678"
+```
+
+**Verify on PolygonScan:**
+
+1. Go to https://polygonscan.com
+2. Search your contract address
+3. Click **Events** tab
+4. See `AuditEntryCreated` events
+
+### Cost Analysis
+
+| Activity              | MATIC Cost   | INR Cost (₹) | Frequency    |
+| --------------------- | ------------ | ------------ | ------------ |
+| Deploy contract       | ~0.01        | ~₹0.50       | One-time     |
+| Contract created      | ~0.001-0.005 | ₹0.05-0.25   | Per contract |
+| Payment logged        | ~0.001-0.005 | ₹0.05-0.25   | Per payment  |
+| Monthly (1000 events) | ~5-10        | ₹250-500     | Monthly      |
+
+**vs Ethereum:** 100x cheaper (Ethereum costs ₹50+ per transaction)
+
+### Alternative RPC Providers
+
+If `polygon-rpc.com` is slow:
+
+```bash
+# Alchemy (Free tier: 300M compute units/month)
+BLOCKCHAIN_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+
+# Infura (Free tier: 100k requests/day)
+BLOCKCHAIN_RPC_URL=https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID
+
+# QuickNode (Paid: $9/month)
+BLOCKCHAIN_RPC_URL=https://YOUR-ENDPOINT.matic.quiknode.pro/YOUR_KEY/
+```
+
+### Security Best Practices
+
+✅ **DO:**
+
+- Store private key in Railway environment variables only
+- Use dedicated wallet for blockchain (not personal wallet)
+- Keep minimal MATIC balance (10-20 MATIC)
+- Monitor gas prices and adjust
+- Enable 2FA on Railway account
+
+❌ **DON'T:**
+
+- Commit private key to Git
+- Share private key in Slack/email
+- Use personal wallet with large funds
+- Hardcode contract address in code
+
+### Monitoring & Maintenance
+
+**Check wallet balance:**
+
+```bash
+# Visit https://polygonscan.com/address/YOUR_WALLET_ADDRESS
+# Or in MetaMask: Switch to Polygon network
+```
+
+**Refill MATIC when low:**
+
+- Buy more from exchange
+- Transfer to same wallet address
+- No configuration changes needed
+
+**View all blockchain logs:**
+
+```bash
+# In Railway logs
+railway logs | grep "Blockchain"
+
+# Or query PostgreSQL
+SELECT * FROM blockchain_audit_log
+WHERE status = 'CONFIRMED'
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+### Disable Blockchain
+
+If you want to turn off blockchain temporarily:
+
+**In Railway:**
+
+```bash
+railway variables set BLOCKCHAIN_ENABLED=false
+```
+
+Or in Railway Dashboard:
+
+- Variables → Find `BLOCKCHAIN_ENABLED`
+- Change value to `false`
+- Click Deploy
+
+All blockchain logs will be skipped. No errors thrown.
+
+---
 
 ---
 
 ## Email Configuration
 
-### Option A: Gmail (Development/Small Scale)
+LegalPay uses **Resend** for transactional emails (verification, password reset, welcome messages).
+
+### Step 1: Sign Up for Resend
+
+1. Go to https://resend.com/signup
+2. Verify your email
+3. Choose plan:
+   - **Free tier:** 3,000 emails/month, 100 emails/day
+   - **Pro:** $20/month for 50,000 emails
+
+### Step 2: Get API Key
+
+1. Go to https://resend.com/api-keys
+2. Click **Create API Key**
+3. Name: `LegalPay Production`
+4. Permissions: **Full Access** (or **Sending access** minimum)
+5. Copy the API key (starts with `re_...`)
+   - ⚠️ **Save it immediately** - shown only once!
+
+### Step 3: Configure Email Domain (Optional but Recommended)
+
+**Option A: Use Resend's Test Domain** (Quick Start)
+
+- From email: `onboarding@resend.dev`
+- ✅ Works immediately
+- ❌ May go to spam
+- ✅ Good for testing
+
+**Option B: Custom Domain** (Production Recommended)
+
+1. **Add Domain in Resend Dashboard**
+   - Go to https://resend.com/domains
+   - Click **Add Domain**
+   - Enter: `yourdomain.com`
+
+2. **Add DNS Records** (in your domain registrar):
+
+```bash
+# SPF Record
+Type: TXT
+Name: @
+Value: v=spf1 include:resend.com ~all
+
+# DKIM Record (Resend will provide the exact value)
+Type: TXT
+Name: resend._domainkey
+Value: <DKIM-value-from-resend-dashboard>
+
+# DMARC Record
+Type: TXT
+Name: _dmarc
+Value: v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com
+```
+
+3. **Verify Domain**
+   - Wait 5-30 minutes for DNS propagation
+   - Resend will auto-verify
+   - Status changes to ✅ **Verified**
+
+### Step 4: Configure Environment Variables
+
+**In Railway Dashboard** (Backend):
+
+| Variable         | Value                    | Description          |
+| ---------------- | ------------------------ | -------------------- |
+| `RESEND_ENABLED` | `true`                   | Enable email sending |
+| `RESEND_API_KEY` | `re_xxxxxxxxxxxxx`       | API key from Resend  |
+| `EMAIL_FROM`     | `noreply@yourdomain.com` | Sender email address |
+
+**Example values:**
+
+```bash
+# With custom domain (recommended)
+RESEND_ENABLED=true
+RESEND_API_KEY=re_abc123def456
+EMAIL_FROM=noreply@legalpay.in
+
+# Or with Resend test domain (for testing)
+RESEND_ENABLED=true
+RESEND_API_KEY=re_abc123def456
+EMAIL_FROM=onboarding@resend.dev
+```
+
+**In Railway CLI:**
+
+```bash
+railway variables set RESEND_ENABLED=true
+railway variables set RESEND_API_KEY=re_abc123def456
+railway variables set EMAIL_FROM=noreply@yourdomain.com
+```
+
+### Step 5: Test Email Sending
+
+**Local Testing** (Development):
+
+```bash
+# In .env.local
+RESEND_ENABLED=false  # Emails log to console instead
+
+# Start backend and register
+# Check backend logs for email content and verification URLs
+```
+
+**Production Testing:**
+
+1. Deploy backend with `RESEND_ENABLED=true`
+2. Register a test user via frontend
+3. Check email inbox (including spam folder)
+4. Verify email links work correctly
+
+**Test API directly:**
+
+```bash
+curl -X POST https://your-railway-app.railway.app/api/v1/auth/register/merchant \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@yourdomain.com",
+    "password": "Test@1234",
+    "businessName": "Test Company",
+    "phoneNumber": "+919876543210"
+  }'
+
+# Check test@yourdomain.com inbox for verification email
+```
+
+### Step 6: Monitor Email Delivery
+
+**Resend Dashboard:**
+
+1. Go to https://resend.com/emails
+2. See all sent emails with delivery status
+3. Check bounce rates and spam reports
+
+**Email deliverability checklist:**
+
+- ✅ Use custom domain (not resend.dev)
+- ✅ Add all DNS records (SPF, DKIM, DMARC)
+- ✅ Verify domain shows green checkmark
+- ✅ Test with https://www.mail-tester.com
+- ✅ Monitor bounce rates < 2%
+
+### Cost Estimates
+
+| Volume               | Cost      |
+| -------------------- | --------- |
+| 0-3,000 emails/month | **Free**  |
+| 3,001-50,000 emails  | $20/month |
+| 50,001-1M emails     | $80/month |
+
+**For LegalPay MVP:** Free tier (3,000/month) supports ~1,000 users registering monthly.
+
+### Troubleshooting
+
+**Emails not sending:**
+
+```bash
+# Check Railway logs
+railway logs
+
+# Verify environment variables set
+railway variables | grep RESEND
+
+# Check Resend dashboard for errors
+# https://resend.com/emails → Filter by "Failed"
+```
+
+**Emails going to spam:**
+
+- ✅ Use custom domain
+- ✅ Verify all DNS records (SPF, DKIM, DMARC)
+- ✅ Warm up domain (start with low volume)
+- ✅ Include unsubscribe link (good practice)
+- ✅ Avoid spam trigger words
+
+---
+
+### Alternative Email Providers
+
+If Resend doesn't work for your region:
+
+#### Option B: Gmail (Development Only)
 
 ```bash
 # Enable 2FA on Gmail account
@@ -1202,9 +1912,9 @@ logging:
 
 # Check slow queries
 psql $DATABASE_URL -c "
-  SELECT query, mean_exec_time, calls 
-  FROM pg_stat_statements 
-  ORDER BY mean_exec_time DESC 
+  SELECT query, mean_exec_time, calls
+  FROM pg_stat_statements
+  ORDER BY mean_exec_time DESC
   LIMIT 10;
 "
 
@@ -1322,17 +2032,20 @@ Before going live:
 ### Regular Maintenance Tasks
 
 **Daily:**
+
 - Check application health
 - Monitor error rates
 - Review payment transactions
 
 **Weekly:**
+
 - Review logs for errors
 - Check database performance
 - Monitor disk usage
 - Review security alerts
 
 **Monthly:**
+
 - Update dependencies
 - Review and rotate logs
 - Test backup restoration
@@ -1391,6 +2104,7 @@ spring:
 **Your LegalPay platform is now production-ready!** 🚀
 
 For ongoing support, refer to:
+
 - [QUICK_START.md](QUICK_START.md) - Development setup
 - [Payment_Integration_Guide.md](docs/Payment_Integration_Implementation_Guide.md) - Payment details
 - [Blockchain_Integration_Guide.md](docs/Blockchain_Integration_Guide.md) - Blockchain details

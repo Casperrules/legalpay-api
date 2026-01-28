@@ -41,6 +41,19 @@ spring:
       name: admin
       password: admin123
 
+# Email Configuration
+email:
+  from: ${EMAIL_FROM:noreply@legalpay.in}
+
+resend:
+  enabled: ${RESEND_ENABLED:false}
+  api:
+    key: ${RESEND_API_KEY:}
+
+app:
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}
+
 # Server Configuration
 server:
   port: 8080
