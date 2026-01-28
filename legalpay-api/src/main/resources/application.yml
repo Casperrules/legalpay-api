@@ -1,0 +1,93 @@
+# ================================
+# LegalPay API - Local Development
+# ================================
+
+spring:
+  profiles:
+    active: local
+  application:
+    name: legalpay-api
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+  # Database Configuration (H2 for local testing)
+  datasource:
+    url: jdbc:h2:mem:legalpaydb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # Security (disabled for local dev)
+  security:
+    user:
+      name: admin
+      password: admin123
+
+# Server Configuration
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-stacktrace: on_param
+
+# Logging
+logging:
+  level:
+    com.legalpay: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+
+# API Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# Application Properties
+app:
+  name: LegalPay
+  version: 1.0.0-SNAPSHOT
+  environment: local
+
+# Payment Gateway Configuration
+payment:
+  provider: razorpay
+  callback-url: ${FRONTEND_URL:http://localhost:3000}/payment/callback
+  webhook-url: ${BACKEND_URL:http://localhost:8080}/api/v1/webhooks/razorpay
+
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_XXXXXXXXXXXXXX}
+  key-secret: ${RAZORPAY_KEY_SECRET:YYYYYYYYYYYYYYYY}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:whsec_ZZZZZZZZZZZZZ}
+  currency: INR
+
+# Blockchain Configuration (Polygon)
+blockchain:
+  enabled: ${BLOCKCHAIN_ENABLED:true}
+  network: ${BLOCKCHAIN_NETWORK:polygon-mumbai} # polygon-mumbai (testnet) or polygon-mainnet (production)
+  rpc-url: ${BLOCKCHAIN_RPC_URL:https://rpc-mumbai.maticvigil.com}
+  private-key: ${BLOCKCHAIN_PRIVATE_KEY:} # Deployer wallet private key (keep secret!)
+  contract-address: ${BLOCKCHAIN_CONTRACT_ADDRESS:} # AuditTrail contract address after deployment
+  gas-price: ${BLOCKCHAIN_GAS_PRICE:1000000000} # 1 Gwei in wei
+  gas-limit: ${BLOCKCHAIN_GAS_LIMIT:300000}
+  confirmation-blocks: ${BLOCKCHAIN_CONFIRMATION_BLOCKS:5}

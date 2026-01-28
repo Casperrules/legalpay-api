@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["openjdk21", "maven"]
+
+[phases.build]
+cmds = [
+  "mvn clean install -DskipTests",
+  "cp legalpay-api/target/legalpay-api-1.0.0-SNAPSHOT.jar app.jar"
+]
+
+[start]
+cmd = "java -Dserver.port=$PORT -jar app.jar"

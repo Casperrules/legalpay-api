@@ -1,0 +1,143 @@
+# ================================
+# LegalPay API - Production
+# ================================
+# IMPORTANT: Replace placeholders with actual values
+
+spring:
+  application:
+    name: legalpay-api
+  
+  # Database Configuration (PostgreSQL)
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/legalpay}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:legalpay}
+    password: ${DB_PASSWORD:REPLACE_WITH_ACTUAL_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  
+  # Redis Configuration
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+      timeout: 2000ms
+
+# Server Configuration
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+
+# Payment Gateway Configuration (Production)
+payment:
+  provider: ${PAYMENT_PROVIDER:razorpay}
+  callback-url: ${FRONTEND_URL}/payment/callback
+  webhook-url: ${BACKEND_URL}/api/v1/webhooks/razorpay
+  
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID}
+  key-secret: ${RAZORPAY_KEY_SECRET}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET}
+  currency: INR
+
+# Security
+jwt:
+  secret: ${JWT_SECRET:REPLACE_WITH_ACTUAL_SECRET_MINIMUM_256_BITS}
+  expiration: 86400000 # 24 hours
+
+# Payment Gateway (Razorpay)
+razorpay:
+  key:
+    id: ${RAZORPAY_KEY_ID:REPLACE_WITH_ACTUAL_KEY}
+    secret: ${RAZORPAY_KEY_SECRET:REPLACE_WITH_ACTUAL_SECRET}
+  webhook:
+    secret: ${RAZORPAY_WEBHOOK_SECRET:REPLACE_WITH_ACTUAL_WEBHOOK_SECRET}
+
+# eSign Provider (Digio)
+digio:
+  api:
+    key: ${DIGIO_API_KEY:REPLACE_WITH_ACTUAL_API_KEY}
+    url: https://api.digio.in/v2
+
+# Blockchain (Polygon)
+polygon:
+  rpc:
+    url: ${POLYGON_RPC_URL:https://polygon-rpc.com}
+  private:
+    key: ${POLYGON_PRIVATE_KEY:REPLACE_WITH_ACTUAL_PRIVATE_KEY}
+  contract:
+    address: ${POLYGON_CONTRACT_ADDRESS:REPLACE_WITH_DEPLOYED_CONTRACT}
+
+# Cloud Storage (Cloudflare R2)
+r2:
+  endpoint: ${R2_ENDPOINT:REPLACE_WITH_R2_ENDPOINT}
+  access-key-id: ${R2_ACCESS_KEY_ID:REPLACE_WITH_ACCESS_KEY}
+  secret-access-key: ${R2_SECRET_ACCESS_KEY:REPLACE_WITH_SECRET_KEY}
+  bucket-name: ${R2_BUCKET_NAME:legalpay-contracts}
+
+# Logging
+logging:
+  level:
+    com.legalpay: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Actuator (Monitoring)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Application Properties
+app:
+  name: LegalPay
+  version: 1.0.0-SNAPSHOT
+  environment: production
+
+# Payment Gateway Configuration
+payment:
+  provider: razorpay
+  callback-url: ${FRONTEND_URL}
+  webhook-url: ${BACKEND_URL}/api/v1/webhooks/razorpay
+  
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID}
+  key-secret: ${RAZORPAY_KEY_SECRET}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET}
+  currency: INR
+
+# Blockchain Configuration (Polygon Mainnet for Production)
+blockchain:
+  enabled: ${BLOCKCHAIN_ENABLED:true}
+  network: polygon-mainnet  # Use Polygon Mainnet in production
+  rpc-url: ${BLOCKCHAIN_RPC_URL:https://polygon-rpc.com}
+  private-key: ${BLOCKCHAIN_PRIVATE_KEY}  # CRITICAL: Keep this secret!
+  contract-address: ${BLOCKCHAIN_CONTRACT_ADDRESS}  # Deployed AuditTrail contract address
+  gas-price: ${BLOCKCHAIN_GAS_PRICE:50000000000}  # 50 Gwei (adjust based on network)
+  gas-limit: ${BLOCKCHAIN_GAS_LIMIT:300000}
+  confirmation-blocks: ${BLOCKCHAIN_CONFIRMATION_BLOCKS:10}  # More confirmations in production
