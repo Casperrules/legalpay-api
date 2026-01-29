@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "./mvnw clean install -DskipTests -Dmaven.compiler.useIncrementalCompilation=false && cp legalpay-api/target/legalpay-api-1.0.0-SNAPSHOT.jar app.jar"
+buildCommand = "chmod +x mvnw && ./mvnw clean install -DskipTests -Dmaven.compiler.useIncrementalCompilation=false && cp legalpay-api/target/legalpay-api-1.0.0-SNAPSHOT.jar app.jar"
 
 [deploy]
 startCommand = "java -Xmx512m -Xms256m -jar app.jar"
