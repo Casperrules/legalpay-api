@@ -1,11 +1,13 @@
 [phases.setup]
-nixPkgs = ["openjdk21", "maven"]
+nixPkgs = ["openjdk21"]
 
 [phases.build]
 cmds = [
-  "mvn clean install -DskipTests",
+  "chmod +x mvnw",
+  "export MAVEN_OPTS='-Xmx1024m -Xms512m -XX:+UseG1GC'",
+  "./mvnw clean install -DskipTests -Dmaven.compiler.useIncrementalCompilation=false -B -ntp",
   "cp legalpay-api/target/legalpay-api-1.0.0-SNAPSHOT.jar app.jar"
 ]
 
 [start]
-cmd = "java -Dserver.port=$PORT -jar app.jar"
+cmd = "java -Xmx512m -Xms256m -Dserver.port=$PORT -jar app.jar"

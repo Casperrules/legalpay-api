@@ -1,0 +1,64 @@
+# Railway Ignore File
+
+# Reduce build context size by excluding unnecessary files
+
+# Frontend (deployed separately on Vercel)
+
+frontend/
+frontend/\*\*
+
+# Development files
+
+.git/
+.gitignore
+.env
+.env.local
+
+# IDE files
+
+.idea/
+.vscode/
+\*.iml
+.DS_Store
+
+# Documentation (not needed for build)
+
+docs/
+\*.md
+!pom.xml
+
+# Test files
+
+\*\*/src/test/
+
+# Build outputs (will be regenerated)
+
+target/
+\*\*/target/
+
+# Logs
+
+logs/
+\*.log
+
+# Scripts (not needed for build)
+
+scripts/
+
+# Blockchain contracts (Solidity source not needed for Java build)
+
+contracts/
+
+# macOS metadata
+
+.\_\*
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary files
+
+_.tmp
+_.bak
+_.swp
+_~
